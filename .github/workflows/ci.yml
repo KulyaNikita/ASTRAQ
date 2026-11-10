@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  # Build with the compiler that comes with the runner.
+  system:
+    name: ${{ matrix.os }}, system compiler, OPENMP=${{ matrix.openmp }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            openmp: 1
+          - os: ubuntu-latest
+            openmp: 0
+          # Apple clang has no OpenMP support.
+          - os: macos-latest
+            openmp: 0
+    steps:
+      - uses: actions/checkout@v4
+      - run: make OPENMP=${{ matrix.openmp }}
+      - run: make OPENMP=${{ matrix.openmp }} test
+
+  # Build with the conda compilers, as bioconda does, with OpenMP on.
+  conda:
+    name: ${{ matrix.os }}, conda compiler, OPENMP=1
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            packages: cxx-compiler make
+            cxx: g++
+          - os: macos-latest
+            packages: cxx-compiler make llvm-openmp
+            cxx: clang++
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: build
+          create-args: ${{ matrix.packages }}
+          condarc: |
+            channels:
+              - conda-forge
+      # cxx-compiler 2.x no longer sets CXX, CPPFLAGS or LDFLAGS on activation,
+      # so point make at the environment's compiler and libraries (libomp on macOS).
+      - name: Build, test and install
+        run: |
+          export CXX="$CONDA_PREFIX/bin/${{ matrix.cxx }}"
+          export CPPFLAGS="-I$CONDA_PREFIX/include"
+          export LDFLAGS="-L$CONDA_PREFIX/lib -Wl,-rpath,$CONDA_PREFIX/lib"
+          "$CXX" --version
+          make
+          make test
+          make install DESTDIR="$PWD/stage" PREFIX=/usr/local
+          ./stage/usr/local/bin/ASTRAQ --version
