@@ -35,8 +35,10 @@ jobs:
         include:
           - os: ubuntu-latest
             packages: cxx-compiler make
+            cxx: g++
           - os: macos-latest
             packages: cxx-compiler make llvm-openmp
+            cxx: clang++
     defaults:
       run:
         shell: bash -el {0}
@@ -49,6 +51,15 @@ jobs:
           condarc: |
             channels:
               - conda-forge
-      - run: make
-      - run: make test
-      - run: make install DESTDIR="$PWD/stage" PREFIX=/usr/local && ./stage/usr/local/bin/ASTRAQ --version
+      # cxx-compiler 2.x no longer sets CXX, CPPFLAGS or LDFLAGS on activation,
+      # so point make at the environment's compiler and libraries (libomp on macOS).
+      - name: Build, test and install
+        run: |
+          export CXX="$CONDA_PREFIX/bin/${{ matrix.cxx }}"
+          export CPPFLAGS="-I$CONDA_PREFIX/include"
+          export LDFLAGS="-L$CONDA_PREFIX/lib -Wl,-rpath,$CONDA_PREFIX/lib"
+          "$CXX" --version
+          make
+          make test
+          make install DESTDIR="$PWD/stage" PREFIX=/usr/local
+          ./stage/usr/local/bin/ASTRAQ --version

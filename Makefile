@@ -8,7 +8,10 @@
 # CXX, CXXFLAGS, CPPFLAGS and LDFLAGS can be set from the environment
 # (conda-build and bioconda set them).
 
-CXX      ?= c++
+# make has a built-in default CXX (g++), so `CXX ?= c++` would never apply.
+ifeq ($(origin CXX),default)
+CXX      := c++
+endif
 CXXFLAGS ?= -O3
 PREFIX   ?= /usr/local
 BINDIR   ?= $(PREFIX)/bin
