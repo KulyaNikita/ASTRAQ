@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  # Build with the compiler that comes with the runner.
+  system:
+    name: ${{ matrix.os }}, system compiler, OPENMP=${{ matrix.openmp }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            openmp: 1
+          - os: ubuntu-latest
+            openmp: 0
+          # Apple clang has no OpenMP support.
+          - os: macos-latest
+            openmp: 0
+    steps:
+      - uses: actions/checkout@v4
+      - run: make OPENMP=${{ matrix.openmp }}
+      - run: make OPENMP=${{ matrix.openmp }} test
+
+  # Build with the conda compilers, as bioconda does, with OpenMP on.
+  conda:
+    name: ${{ matrix.os }}, conda compiler, OPENMP=1
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            packages: cxx-compiler make
+          - os: macos-latest
+            packages: cxx-compiler make llvm-openmp
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: build
+          create-args: ${{ matrix.packages }}
+          condarc: |
+            channels:
+              - conda-forge
+      - run: make
+      - run: make test
+      - run: make install DESTDIR="$PWD/stage" PREFIX=/usr/local && ./stage/usr/local/bin/ASTRAQ --version
