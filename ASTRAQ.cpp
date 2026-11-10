@@ -1,13 +1,13 @@
 // ASTRAQ.cpp
 //
-// A from-scratch, original implementation of ASTRAL's core optimization
-// problem (Mirarab et al. 2014 Bioinformatics; Mirarab & Warnow 2015;
-// Zhang et al. 2018 BMC Bioinformatics "ASTRAL-III"), adapted for input
-// that already consists of (possibly weighted) quartet trees, instead of
-// full multi-leaf gene trees.
+// A from-scratch, original implementation of "ASTRAL's" core optimization
+// problem, posed and described in for the first time in Bryant and Steel 2001, 
+// Constructing optimal trees from quartets, Journal of Algorithms (Volume 38, Issue 1) ),
+// adapted for input that already consists of (possibly weighted) quartet trees, instead of
+// full multi-leaf gene trees in Astral.
 //
 // ============================== THE MATH ===================================
-// ASTRAL seeks the species tree T whose induced quartets are shared as much
+// Bryant and Steel, 2001, seek the  tree T whose quartets are shared as much
 // as possible with the input, subject to: every bipartition of T must come
 // from a constrained candidate set X (this is what makes it polynomial-time
 // instead of NP-hard). The recursion is:
