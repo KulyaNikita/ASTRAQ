@@ -1,7 +1,7 @@
 // ASTRAQ.cpp
 //
 // A from-scratch, original implementation of "ASTRAL's" core optimization
-// problem, posed and described in for the first time in Bryant and Steel 2001, 
+// problem, posed and described originally in Bryant and Steel 2001, 
 // Constructing optimal trees from quartets, Journal of Algorithms (Volume 38, Issue 1) ),
 // adapted for input that already consists of (possibly weighted) quartet trees, instead of
 // full multi-leaf gene trees in Astral.
